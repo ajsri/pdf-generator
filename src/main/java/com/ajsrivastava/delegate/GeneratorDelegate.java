@@ -1,4 +1,4 @@
-package com.ajsrivastava;
+package com.ajsrivastava.delegate;
 
 import com.lowagie.text.DocumentException;
 import org.springframework.http.HttpHeaders;
@@ -9,9 +9,6 @@ import org.xhtmlrenderer.pdf.ITextRenderer;
 
 import java.io.ByteArrayOutputStream;
 
-/**
- * Created by ASRIV1 on 2/14/17.
- */
 public class GeneratorDelegate {
     private String url;
     
@@ -28,9 +25,9 @@ public class GeneratorDelegate {
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.parseMediaType("application/pdf"));
         
-            final ByteArrayOutputStream baos = new ByteArrayOutputStream();
-            iTextRenderer.createPDF(baos);
-            return new ResponseEntity<>(baos.toByteArray(), headers, HttpStatus.OK);
+            final ByteArrayOutputStream stream = new ByteArrayOutputStream();
+            iTextRenderer.createPDF(stream);
+            return new ResponseEntity<>(stream.toByteArray(), headers, HttpStatus.OK);
         }
         catch (final DocumentException e) {
             e.printStackTrace();
