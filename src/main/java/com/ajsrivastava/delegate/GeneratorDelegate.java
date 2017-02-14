@@ -34,4 +34,12 @@ public class GeneratorDelegate {
         }
         return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
     }
+    
+    public String getUrl() {
+        return url;
+    }
+    
+    public void setUrl(String url) {
+        this.url = url;
+    }
 }

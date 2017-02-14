@@ -8,3 +8,4 @@ Simple service that takes a URL parameter, converts it into a PDF, and serves it
 - Better error handling
 - Unit tests (I guess)
 - Add toggle for downloading file vs browser view
+- Add ability to render from string rather than file
