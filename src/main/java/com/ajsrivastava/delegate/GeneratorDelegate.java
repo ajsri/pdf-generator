@@ -5,6 +5,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.xhtmlrenderer.layout.SharedContext;
 import org.xhtmlrenderer.pdf.ITextRenderer;
 
 import java.io.ByteArrayOutputStream;
@@ -19,6 +20,8 @@ public class GeneratorDelegate {
     public ResponseEntity<byte[]> create() {
         try {
             final ITextRenderer iTextRenderer = new ITextRenderer();
+            SharedContext sharedContext = iTextRenderer.getSharedContext();
+            sharedContext.setReplacedElementFactory(new ImageDelegate(iTextRenderer.getSharedContext().getReplacedElementFactory()));
             iTextRenderer.setDocument(this.url);
             iTextRenderer.layout();
         
@@ -31,8 +34,8 @@ public class GeneratorDelegate {
         }
         catch (final DocumentException e) {
             e.printStackTrace();
+            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
         }
-        return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
     }
     
     public String getUrl() {
