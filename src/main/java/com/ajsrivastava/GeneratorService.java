@@ -14,14 +14,15 @@ import java.util.Map;
 public class GeneratorService {
     @RequestMapping("/pdf")
     public ResponseEntity<byte[]> convertPDF(@RequestParam("url") String url) {
-        GeneratorDelegate gd = new GeneratorDelegate(url);
+        GeneratorDelegate gd = new GeneratorDelegate(url, "pdf-gen-temp");
         return gd.create();
     }
     
     @RequestMapping("/save")
-    public ResponseEntity<Map<String, String>> s3Pdf(@RequestParam("url") String url) {
+    public ResponseEntity s3Pdf(@RequestParam("url") String url, @RequestParam("name") String name) {
         Map<String, String> response = new HashMap<>();
-        response.put("message", "hello world");
-        return new ResponseEntity<Map<String, String>>(response, HttpStatus.OK);
+        GeneratorDelegate gd = new GeneratorDelegate(url, "pdf-gen-temp");
+        gd.save(name);
+        return new ResponseEntity(HttpStatus.OK);
     }
 }

@@ -1,5 +1,11 @@
 package com.ajsrivastava.delegate;
 
+import com.amazonaws.auth.EnvironmentVariableCredentialsProvider;
+import com.amazonaws.auth.PropertiesCredentials;
+import com.amazonaws.services.s3.AmazonS3;
+import com.amazonaws.services.s3.AmazonS3Client;
+import com.amazonaws.services.s3.model.ObjectMetadata;
+import com.amazonaws.services.s3.model.PutObjectRequest;
 import com.lowagie.text.DocumentException;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -8,13 +14,18 @@ import org.springframework.http.ResponseEntity;
 import org.xhtmlrenderer.layout.SharedContext;
 import org.xhtmlrenderer.pdf.ITextRenderer;
 
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.InputStream;
+import java.security.Timestamp;
 
 public class GeneratorDelegate {
     private String url;
+    private String bucket;
     
-    public GeneratorDelegate(String url) {
+    public GeneratorDelegate(String url, String bucket) {
         this.url = url;
+        this.bucket = bucket;
     }
     
     public ResponseEntity<byte[]> create() {
@@ -35,6 +46,34 @@ public class GeneratorDelegate {
         catch (final DocumentException e) {
             e.printStackTrace();
             return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+        }
+    }
+    
+    public boolean save(String filename) {
+        try {
+            final ITextRenderer iTextRenderer = new ITextRenderer();
+            SharedContext sharedContext = iTextRenderer.getSharedContext();
+            sharedContext.setReplacedElementFactory(new ImageDelegate(iTextRenderer.getSharedContext().getReplacedElementFactory()));
+            iTextRenderer.setDocument(this.url);
+            iTextRenderer.layout();
+        
+        
+            final ByteArrayOutputStream stream = new ByteArrayOutputStream();
+            iTextRenderer.createPDF(stream);
+            byte[] buffer = stream.toByteArray();
+    
+            InputStream is = new ByteArrayInputStream(buffer);
+    
+            AmazonS3 s3 = new AmazonS3Client();
+            ObjectMetadata meta = new ObjectMetadata();
+            meta.setContentLength(buffer.length);
+            s3.putObject(new PutObjectRequest(this.bucket, filename + ".pdf", is, meta));
+            //stream.toByteArray()
+            return true;
+        }
+        catch (final DocumentException e) {
+            e.printStackTrace();
+            return false;
         }
     }
     
