@@ -16,69 +16,74 @@ import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 
 public class PDFDelegate {
-    private String url;
+    private String input;
     private String bucket;
+    private boolean url;
     
-    public PDFDelegate(String url, String bucket) {
-        this.url = url;
+    public PDFDelegate(String content, String bucket, boolean url) {
+        this.input = content;
         this.bucket = bucket;
+        this.url = url;
     }
     
-    public ResponseEntity<byte[]> create() {
+    public ByteArrayOutputStream createImage() {
         try {
             final ITextRenderer iTextRenderer = new ITextRenderer();
             SharedContext sharedContext = iTextRenderer.getSharedContext();
             sharedContext.setReplacedElementFactory(new ImageDelegate(iTextRenderer.getSharedContext().getReplacedElementFactory()));
-            iTextRenderer.setDocument(this.url);
+            if(this.url) {
+                iTextRenderer.setDocument(this.input);
+            }
+            else {
+                iTextRenderer.setDocumentFromString(this.input);
+            }
             iTextRenderer.layout();
-        
-            HttpHeaders headers = new HttpHeaders();
-            headers.setContentType(MediaType.parseMediaType("application/pdf"));
-        
+    
             final ByteArrayOutputStream stream = new ByteArrayOutputStream();
             iTextRenderer.createPDF(stream);
-            return new ResponseEntity<>(stream.toByteArray(), headers, HttpStatus.OK);
+            return stream;
         }
-        catch (final DocumentException e) {
-            e.printStackTrace();
-            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
-        }
-    }
-    
-    public String save(String filename) {
-        try {
-            final ITextRenderer iTextRenderer = new ITextRenderer();
-            SharedContext sharedContext = iTextRenderer.getSharedContext();
-            sharedContext.setReplacedElementFactory(new ImageDelegate(iTextRenderer.getSharedContext().getReplacedElementFactory()));
-            iTextRenderer.setDocument(this.url);
-            iTextRenderer.layout();
         
-        
-            final ByteArrayOutputStream stream = new ByteArrayOutputStream();
-            iTextRenderer.createPDF(stream);
-            
-            byte[] buffer = stream.toByteArray();
-            InputStream is = new ByteArrayInputStream(buffer);
-    
-            AmazonS3Client s3 = new AmazonS3Client();
-            ObjectMetadata meta = new ObjectMetadata();
-            meta.setContentLength(buffer.length);
-            
-            s3.putObject(new PutObjectRequest(this.bucket, filename + ".pdf", is, meta));
-            
-            return s3.getResourceUrl(this.bucket, filename + ".pdf");
-        }
         catch (final DocumentException e) {
             e.printStackTrace();
             return null;
         }
     }
     
-    public String getUrl() {
+    public ResponseEntity<byte[]> show() {
+        ByteArrayOutputStream stream = this.createImage();
+        
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.parseMediaType("application/pdf"));
+        
+        return new ResponseEntity<>(stream.toByteArray(), headers, HttpStatus.OK);
+    }
+    
+    public String save(String filename) {
+        byte[] buffer = this.createImage().toByteArray();
+        InputStream is = new ByteArrayInputStream(buffer);
+        
+        AmazonS3Client s3 = new AmazonS3Client();
+        ObjectMetadata meta = new ObjectMetadata();
+        meta.setContentLength(buffer.length);
+        
+        s3.putObject(new PutObjectRequest(this.bucket, filename + ".pdf", is, meta));
+        return s3.getResourceUrl(this.bucket, filename + ".pdf");
+    }
+    
+    public String getInput() {
+        return input;
+    }
+    
+    public void setInput(String input) {
+        this.input = input;
+    }
+    
+    public boolean isUrl() {
         return url;
     }
     
-    public void setUrl(String url) {
+    public void setUrl(boolean url) {
         this.url = url;
     }
     
