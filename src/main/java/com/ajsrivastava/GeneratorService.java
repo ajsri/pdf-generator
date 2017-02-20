@@ -18,7 +18,7 @@ public class GeneratorService {
         return gd.create();
     }
     
-    @RequestMapping("/save")
+    @RequestMapping(value = "/save")
     public ResponseEntity<Map<String, String>> s3Pdf(@RequestParam("url") String url, @RequestParam("name") String name) {
         Map<String, String> response = new HashMap<>();
         PDFDelegate gd = new PDFDelegate(url, "pdf-gen-temp");
