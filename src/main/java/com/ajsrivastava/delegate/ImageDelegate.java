@@ -70,7 +70,6 @@ public class ImageDelegate implements ReplacedElementFactory {
         else {
             InputStream input = null;
             try {
-                System.out.println(srcAttr);
                 if(srcAttr.indexOf("http") > -1) {
                     input = new URL(srcAttr).openStream();
                 }
