@@ -1,6 +1,6 @@
 package com.ajsrivastava;
 
-import com.ajsrivastava.delegate.GeneratorDelegate;
+import com.ajsrivastava.delegate.PDFDelegate;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -14,15 +14,16 @@ import java.util.Map;
 public class GeneratorService {
     @RequestMapping("/pdf")
     public ResponseEntity<byte[]> convertPDF(@RequestParam("url") String url) {
-        GeneratorDelegate gd = new GeneratorDelegate(url, "pdf-gen-temp");
+        PDFDelegate gd = new PDFDelegate(url, "pdf-gen-temp");
         return gd.create();
     }
     
     @RequestMapping("/save")
-    public ResponseEntity s3Pdf(@RequestParam("url") String url, @RequestParam("name") String name) {
+    public ResponseEntity<Map<String, String>> s3Pdf(@RequestParam("url") String url, @RequestParam("name") String name) {
         Map<String, String> response = new HashMap<>();
-        GeneratorDelegate gd = new GeneratorDelegate(url, "pdf-gen-temp");
-        gd.save(name);
-        return new ResponseEntity(HttpStatus.OK);
+        PDFDelegate gd = new PDFDelegate(url, "pdf-gen-temp");
+        response.put("url", gd.save(name));
+        
+        return new ResponseEntity(response, HttpStatus.OK);
     }
 }

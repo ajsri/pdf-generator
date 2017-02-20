@@ -1,11 +1,10 @@
 package com.ajsrivastava.delegate;
 
-import com.amazonaws.auth.EnvironmentVariableCredentialsProvider;
-import com.amazonaws.auth.PropertiesCredentials;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.AmazonS3Client;
 import com.amazonaws.services.s3.model.ObjectMetadata;
 import com.amazonaws.services.s3.model.PutObjectRequest;
+import com.amazonaws.services.s3.model.PutObjectResult;
 import com.lowagie.text.DocumentException;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -17,13 +16,14 @@ import org.xhtmlrenderer.pdf.ITextRenderer;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
-import java.security.Timestamp;
+import java.util.HashMap;
+import java.util.Map;
 
-public class GeneratorDelegate {
+public class PDFDelegate {
     private String url;
     private String bucket;
     
-    public GeneratorDelegate(String url, String bucket) {
+    public PDFDelegate(String url, String bucket) {
         this.url = url;
         this.bucket = bucket;
     }
@@ -49,7 +49,7 @@ public class GeneratorDelegate {
         }
     }
     
-    public boolean save(String filename) {
+    public String save(String filename) {
         try {
             final ITextRenderer iTextRenderer = new ITextRenderer();
             SharedContext sharedContext = iTextRenderer.getSharedContext();
@@ -60,20 +60,21 @@ public class GeneratorDelegate {
         
             final ByteArrayOutputStream stream = new ByteArrayOutputStream();
             iTextRenderer.createPDF(stream);
+            
             byte[] buffer = stream.toByteArray();
-    
             InputStream is = new ByteArrayInputStream(buffer);
     
-            AmazonS3 s3 = new AmazonS3Client();
+            AmazonS3Client s3 = new AmazonS3Client();
             ObjectMetadata meta = new ObjectMetadata();
             meta.setContentLength(buffer.length);
+            
             s3.putObject(new PutObjectRequest(this.bucket, filename + ".pdf", is, meta));
-            //stream.toByteArray()
-            return true;
+            
+            return s3.getResourceUrl(this.bucket, filename + ".pdf");
         }
         catch (final DocumentException e) {
             e.printStackTrace();
-            return false;
+            return null;
         }
     }
     
@@ -83,5 +84,13 @@ public class GeneratorDelegate {
     
     public void setUrl(String url) {
         this.url = url;
+    }
+    
+    public String getBucket() {
+        return bucket;
+    }
+    
+    public void setBucket(String bucket) {
+        this.bucket = bucket;
     }
 }
