@@ -18,6 +18,7 @@ import org.apache.commons.io.IOUtils;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URL;
 
 //http://www.tothenew.com/blog/using-data-urls-for-embedding-images-in-flying-saucer-generated-pdfs/
 
@@ -69,8 +70,14 @@ public class ImageDelegate implements ReplacedElementFactory {
         else {
             InputStream input = null;
             try {
-                //The file HAS to be in the same directory - will investigate more
-                input = new FileInputStream("src/main/resources/templates/" + srcAttr);
+                System.out.println(srcAttr);
+                if(srcAttr.indexOf("http") > -1) {
+                    input = new URL(srcAttr).openStream();
+                }
+                else {
+                    input = new FileInputStream("src/main/resources/templates/" + srcAttr);
+                }
+
                 final byte[] bytes = IOUtils.toByteArray(input);
                 final Image image = Image.getInstance(bytes);
                 fsImage = new ITextFSImage(image);
